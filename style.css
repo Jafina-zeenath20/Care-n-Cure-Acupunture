@@ -211,7 +211,9 @@ img {
 
 .nav-links {
   display: flex;
-  gap: 24px;
+  gap: 16px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .nav-link {
