@@ -1,10 +1,9 @@
-// Main JavaScript
-
 document.addEventListener('DOMContentLoaded', () => {
     // Mobile Menu Toggle
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const mobileMenu = document.querySelector('.mobile-menu');
     const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+    const navLinks = document.querySelectorAll('.nav-link');
 
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', () => {
@@ -29,9 +28,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Update active nav link on scroll
+    window.addEventListener('scroll', () => {
+        let currentSection = '';
+        const sections = document.querySelectorAll('section[id]');
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (window.pageYOffset >= sectionTop - 100) {
+                currentSection = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${currentSection}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+
     // Sticky Header Effect
     const navbar = document.querySelector('.navbar');
+    let lastScrollY = 0;
     window.addEventListener('scroll', () => {
+        lastScrollY = window.scrollY;
         if (window.scrollY > 50) {
             navbar.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
             navbar.style.padding = '0.5rem 0';
@@ -104,13 +126,35 @@ document.addEventListener('DOMContentLoaded', () => {
         appointmentForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value || 'Not provided';
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim() || 'Not provided';
             const treatment = document.getElementById('treatment').value;
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
-            const message = document.getElementById('message').value || 'No specific message';
+            const message = document.getElementById('message').value.trim() || 'No specific message';
+
+            // Validation
+            if (!name) {
+                alert('Please enter your name.');
+                return;
+            }
+
+            // Phone validation - should be at least 10 digits
+            const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
+            if (!phoneRegex.test(phone)) {
+                alert('Please enter a valid phone number (at least 10 digits).');
+                return;
+            }
+
+            // Email validation if provided
+            if (email && email !== 'Not provided') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    alert('Please enter a valid email address.');
+                    return;
+                }
+            }
 
             // Format message for WhatsApp
             const whatsappMessage = `*New Appointment Request*
@@ -119,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
 *Phone:* ${phone}
 *Email:* ${email}
 *Treatment:* ${treatment}
-*Date:* ${date}
-*Time:* ${time}
+*Date:* ${date || 'Not specified'}
+*Time:* ${time || 'Not specified'}
 *Message:* ${message}
             
 Please confirm my appointment.`;
@@ -129,12 +173,17 @@ Please confirm my appointment.`;
             const encodedMessage = encodeURIComponent(whatsappMessage);
             const clinicPhone = '918825641943';
 
-            // Redirect to WhatsApp
-            window.open(`https://wa.me/${clinicPhone}?text=${encodedMessage}`, '_blank');
+            try {
+                // Redirect to WhatsApp
+                window.open(`https://wa.me/${clinicPhone}?text=${encodedMessage}`, '_blank');
 
-            // Optional: Reset form or show success message
-            // appointmentForm.reset();
-            alert('Thank you! Redirecting you to WhatsApp to send your details.');
+                // Reset form after successful submission
+                appointmentForm.reset();
+                alert('Thank you! Redirecting you to WhatsApp to send your details.');
+            } catch (error) {
+                console.error('Error opening WhatsApp:', error);
+                alert('Error opening WhatsApp. Please try again.');
+            }
         });
     }
 });
